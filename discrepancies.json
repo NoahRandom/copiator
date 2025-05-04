@@ -1,0 +1,13 @@
+{
+    "only_in_folder1": [
+        "L12.jpg",
+        "L10.jpg"
+    ],
+    "only_in_folder2": [],
+    "size_mismatches": {
+        "L13.jpg": {
+            "folder1_size": 1151570,
+            "folder2_size": 142240
+        }
+    }
+}
