@@ -7,6 +7,9 @@ from tkinter import filedialog
 source_folder = None
 destination_folder = None
 
+# if not os.path.exists("outcome_files"):
+os.makedirs("outcome_files", exist_ok=True)
+
 def backup_files_old(source_dir, destination_dir):
     # Ensure the source directory exists
     if not os.path.exists(source_dir):
@@ -36,7 +39,7 @@ def backup_files_old(source_dir, destination_dir):
             except Exception as e:
                 print(f"Error: '{e}'")
 
-def backup_files(source_dir, destination_dir, success_log_path='success_log.json', error_log_path='error_log.json'):
+def backup_files(source_dir, destination_dir, success_log_path='outcome_files/success_log.json', error_log_path='outcome_files/error_log.json'):
     # Ensure the source directory exists
     if not os.path.exists(source_dir):
         print(f"Source directory '{source_dir}' does not exist!")
@@ -92,7 +95,7 @@ def get_file_sizes(folder):
             file_sizes[file_path] = os.path.getsize(os.path.join(root, file))
     return file_sizes
 
-def compare_folders(folder1, folder2, output_file = "discrepancies.json"):
+def compare_folders(folder1, folder2, output_file = "outcome_files/discrepancies.json"):
     """Compare files and subfolders, checking for missing files and size mismatches."""
     folder1 = source_entry.get()
     folder2 = destination_entry.get()
@@ -136,7 +139,7 @@ def process_folders():
     destination = destination_entry.get()
     result_label.config(text=f"Source: {source}\nDestination: {destination}")
 
-def save_folders_to_json(source: str, destination: str, filename="folders_selection.json"):
+def save_folders_to_json(source: str, destination: str, filename="outcome_files/folders_selection.json"):
     data = {
         "source_folder": source,
         "destination_folder": destination
@@ -159,7 +162,7 @@ def save_folders_to_json(source: str, destination: str, filename="folders_select
     
     print(f"Folders saved/updated in {filename}")
 
-def read_folders_from_json(filename="folders_selection.json"):
+def read_folders_from_json(filename="outcome_files/folders_selection.json"):
     if os.path.exists(filename):
         with open(filename, "r") as json_file:
             data = json.load(json_file)
@@ -186,8 +189,6 @@ def process_folders():
     source = source_entry.get()
     destination = destination_entry.get()
     result_label.config(text=f"Source: {source}\nDestination: {destination}")
-
-
 
 # Create the main window
 root = tk.Tk()
@@ -216,8 +217,6 @@ destination_entry.grid(row=1, column=1, padx=10, pady=5)
 destination_button = tk.Button(root, text="Browse", command=select_destination_folder)
 destination_button.grid(row=1, column=2, padx=10, pady=5)
 
-# source_folder="C:/Users/Noe/Pictures/copy-test/copy-test-source"
-# destination_folder="C:/Users/Noe/Pictures/copy-test/copy-test-destination"
 # Process button
 process_button = tk.Button(root, text="Copy", command=lambda: backup_files(source_folder, destination_folder))
 process_button.grid(row=2, column=1, padx=10, pady=10)
