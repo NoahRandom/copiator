@@ -1,43 +1,26 @@
 import os
 import shutil
 import json
+from datetime import datetime
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
+""" Application to backup files from a source to a destination folder. The app stores the outcome 
+    of the copy in the 'outcome_files' folder in json files for success and failed files. You also
+    have the ability to compare two folders and it will save the differencies in the
+    discrepancies.json file.
+"""
+
 # creates the outcome_files folder if it doesn't exist
-os.makedirs("outcome_files", exist_ok=True)
+json_files_path = "outcome_files"
+os.makedirs(json_files_path, exist_ok=True)
 
-def backup_files_old(source_folder, destination_folder):
-    # Ensure the source directory exists
-    if not os.path.exists(source_folder):
-        print(f"Source directory '{source_folder}' does not exist!")
-        return
+def get_custom_timestamp():
+    now = datetime.now()
+    return f"{now.year:04}{now.month:02}{now.day:02}T{now.hour:02}{now.minute:02}"
 
-    # Ensure the destination directory exists; if not, create it
-    if not os.path.exists(destination_folder):
-        os.makedirs(destination_folder)
-
-    # Walk through the source directory
-    for root, dirs, files in os.walk(source_folder):
-        for file in files:
-            source_file_path = os.path.join(root, file)
-
-            # Get the relative path of the file and determine its destination path
-            relative_path = os.path.relpath(source_file_path, source_folder)
-            destination_file_path = os.path.join(destination_folder, relative_path)
-
-            # Create destination folders if they don't exist
-            os.makedirs(os.path.dirname(destination_file_path), exist_ok=True)
-
-            # Copy file to destination
-            try:
-                shutil.copy2(source_file_path, destination_file_path)
-                print(f"Copied: {source_file_path} -> {destination_file_path}")
-            except Exception as e:
-                print(f"Error: '{e}'")
-
-def backup_files(success_log_path='outcome_files/success_log.json',
-                 error_log_path='outcome_files/error_log.json'):
+def backup_files(success_log_path='success_log.json',
+                 error_log_path='error_log.json'):
     source_folder = source_entry.get()
     destination_folder = destination_entry.get()
 
@@ -78,10 +61,11 @@ def backup_files(success_log_path='outcome_files/success_log.json',
                 })
 
     # Save logs
-    with open(success_log_path, 'w') as f:
+    timestamp = get_custom_timestamp()
+    with open(os.path.join(json_files_path,f"{timestamp}-{success_log_path}"), 'w') as f:
         json.dump(success_log, f, indent=2)
 
-    with open(error_log_path, 'w') as f:
+    with open(os.path.join(json_files_path,f"{timestamp}-{error_log_path}"), 'w') as f:
         json.dump(error_log, f, indent=2)
 
     print(f"\nBackup complete. Successes: {len(success_log)} | Failures: {len(error_log)}")
@@ -96,7 +80,7 @@ def get_file_sizes(folder):
             file_sizes[file_path] = os.path.getsize(os.path.join(root, file))
     return file_sizes
 
-def compare_folders(output_file = "outcome_files/discrepancies.json"):
+def compare_folders(output_file = "discrepancies.json"):
     """Compare files and subfolders, checking for missing files and size mismatches."""
     folder1 = source_entry.get()
     folder2 = destination_entry.get()
@@ -121,7 +105,8 @@ def compare_folders(output_file = "outcome_files/discrepancies.json"):
     }
 
     # Save discrepancies to a JSON file
-    with open(output_file, "w") as json_file:
+    timestamp = get_custom_timestamp()
+    with open(os.path.join(json_files_path, f"{timestamp}-{output_file}"), "w") as json_file:
         json.dump(discrepancies, json_file, indent=4)
 
     print(f"Discrepancies saved to {output_file}")
