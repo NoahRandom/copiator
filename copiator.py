@@ -112,9 +112,6 @@ def compare_folders(output_file = "discrepancies.json"):
     print(f"Discrepancies saved to {output_file}")
     messagebox.showinfo("Success", f"Discrepancies saved to {output_file}")
 
-def my_function():
-    result_label.config(text="Hello, Tkinter!")
-
 def select_source_folder():
     folder = filedialog.askdirectory()
     source_entry.delete(0, tk.END)
