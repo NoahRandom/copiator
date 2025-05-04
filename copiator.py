@@ -2,32 +2,29 @@ import os
 import shutil
 import json
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 
-source_folder = None
-destination_folder = None
-
-# if not os.path.exists("outcome_files"):
+# creates the outcome_files folder if it doesn't exist
 os.makedirs("outcome_files", exist_ok=True)
 
-def backup_files_old(source_dir, destination_dir):
+def backup_files_old(source_folder, destination_folder):
     # Ensure the source directory exists
-    if not os.path.exists(source_dir):
-        print(f"Source directory '{source_dir}' does not exist!")
+    if not os.path.exists(source_folder):
+        print(f"Source directory '{source_folder}' does not exist!")
         return
 
     # Ensure the destination directory exists; if not, create it
-    if not os.path.exists(destination_dir):
-        os.makedirs(destination_dir)
+    if not os.path.exists(destination_folder):
+        os.makedirs(destination_folder)
 
     # Walk through the source directory
-    for root, dirs, files in os.walk(source_dir):
+    for root, dirs, files in os.walk(source_folder):
         for file in files:
             source_file_path = os.path.join(root, file)
 
             # Get the relative path of the file and determine its destination path
-            relative_path = os.path.relpath(source_file_path, source_dir)
-            destination_file_path = os.path.join(destination_dir, relative_path)
+            relative_path = os.path.relpath(source_file_path, source_folder)
+            destination_file_path = os.path.join(destination_folder, relative_path)
 
             # Create destination folders if they don't exist
             os.makedirs(os.path.dirname(destination_file_path), exist_ok=True)
@@ -39,24 +36,28 @@ def backup_files_old(source_dir, destination_dir):
             except Exception as e:
                 print(f"Error: '{e}'")
 
-def backup_files(source_dir, destination_dir, success_log_path='outcome_files/success_log.json', error_log_path='outcome_files/error_log.json'):
+def backup_files(success_log_path='outcome_files/success_log.json',
+                 error_log_path='outcome_files/error_log.json'):
+    source_folder = source_entry.get()
+    destination_folder = destination_entry.get()
+
     # Ensure the source directory exists
-    if not os.path.exists(source_dir):
-        print(f"Source directory '{source_dir}' does not exist!")
+    if not os.path.exists(source_folder):
+        print(f"Source directory '{source_folder}' does not exist!")
         return
 
     # Ensure the destination directory exists
-    os.makedirs(destination_dir, exist_ok=True)
+    os.makedirs(destination_folder, exist_ok=True)
 
     success_log = []
     error_log = []
 
     # Walk through the source directory
-    for root, dirs, files in os.walk(source_dir):
+    for root, dirs, files in os.walk(source_folder):
         for file in files:
             source_file_path = os.path.join(root, file)
-            relative_path = os.path.relpath(source_file_path, source_dir)
-            destination_file_path = os.path.join(destination_dir, relative_path)
+            relative_path = os.path.relpath(source_file_path, source_folder)
+            destination_file_path = os.path.join(destination_folder, relative_path)
 
             # Create destination subfolders if needed
             os.makedirs(os.path.dirname(destination_file_path), exist_ok=True)
@@ -95,10 +96,14 @@ def get_file_sizes(folder):
             file_sizes[file_path] = os.path.getsize(os.path.join(root, file))
     return file_sizes
 
-def compare_folders(folder1, folder2, output_file = "outcome_files/discrepancies.json"):
+def compare_folders(output_file = "outcome_files/discrepancies.json"):
     """Compare files and subfolders, checking for missing files and size mismatches."""
     folder1 = source_entry.get()
     folder2 = destination_entry.get()
+
+    if folder1 == folder2:
+        messagebox.showerror("Comparing Same Folder","ATTENTION: You are comparing the same folder!!")
+        return "Error: Comparing the same folder"
 
     files1 = get_file_sizes(folder1)
     files2 = get_file_sizes(folder2)
@@ -120,6 +125,7 @@ def compare_folders(folder1, folder2, output_file = "outcome_files/discrepancies
         json.dump(discrepancies, json_file, indent=4)
 
     print(f"Discrepancies saved to {output_file}")
+    messagebox.showinfo("Success", f"Discrepancies saved to {output_file}")
 
 def my_function():
     result_label.config(text="Hello, Tkinter!")
@@ -134,45 +140,6 @@ def select_destination_folder():
     destination_entry.delete(0, tk.END)
     destination_entry.insert(0, folder)
 
-def process_folders():
-    source = source_entry.get()
-    destination = destination_entry.get()
-    result_label.config(text=f"Source: {source}\nDestination: {destination}")
-
-def save_folders_to_json(source: str, destination: str, filename="outcome_files/folders_selection.json"):
-    data = {
-        "source_folder": source,
-        "destination_folder": destination
-    }
-    
-    if os.path.exists(filename):
-        with open(filename, "r") as json_file:
-            existing_data = json.load(json_file)
-
-        if source:
-            existing_data['source_folder'] = source
-        if destination:
-            existing_data['destination_folder'] = destination
-        # Update the existing data
-        # existing_data.update(data)
-        data = existing_data
-
-    with open(filename, "w") as json_file:
-        json.dump(data, json_file, indent=4)
-    
-    print(f"Folders saved/updated in {filename}")
-
-def read_folders_from_json(filename="outcome_files/folders_selection.json"):
-    if os.path.exists(filename):
-        with open(filename, "r") as json_file:
-            data = json.load(json_file)
-            source = data.get("source_folder", "Not found")
-            destination = data.get("destination_folder", "Not found")
-            return source, destination
-    else:
-        print(f"{filename} does not exist.")
-        return None, None
-
 def select_source_folder():
     folder = filedialog.askdirectory()
     source_entry.delete(0, tk.END)
@@ -184,11 +151,6 @@ def select_destination_folder():
     destination_entry.delete(0, tk.END) # deletes from zero to the end
     destination_entry.insert(0, folder)
     destination_folder = folder
-
-def process_folders():
-    source = source_entry.get()
-    destination = destination_entry.get()
-    result_label.config(text=f"Source: {source}\nDestination: {destination}")
 
 # Create the main window
 root = tk.Tk()
@@ -218,11 +180,11 @@ destination_button = tk.Button(root, text="Browse", command=select_destination_f
 destination_button.grid(row=1, column=2, padx=10, pady=5)
 
 # Process button
-process_button = tk.Button(root, text="Copy", command=lambda: backup_files(source_folder, destination_folder))
+process_button = tk.Button(root, text="Copy", command=backup_files)
 process_button.grid(row=2, column=1, padx=10, pady=10)
 
 # Compare button
-process_button = tk.Button(root, text="Compare", command=lambda: compare_folders(folder1=source_folder, folder2=destination_folder))
+process_button = tk.Button(root, text="Compare", command=compare_folders)
 process_button.grid(row=2, column=2, padx=10, pady=10)
 
 # Result label
